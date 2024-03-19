@@ -225,7 +225,7 @@ function edit_skin.register_on_set_skin(func)
 	table.insert(edit_skin.registered_on_set_skins, func)
 end
 
-function edit_skin.show_formspec(player)
+function edit_skin.get_formspec(player)
 	local formspec_data = edit_skin.player_formspecs[player]
 	local has_admin_priv = minetest.check_player_privs(player, "edit_skin_admin")
 	if has_admin_priv ~= formspec_data.has_admin_priv then
@@ -398,34 +398,11 @@ function edit_skin.show_formspec(player)
 		formspec = formspec ..
 			"label[7.3,7.2;" .. page_num .. " / " .. page_count .. "]"
 	end
-
-	minetest.show_formspec(player:get_player_name(), "edit_skin:edit_skin", formspec)
+	return formspec
+	--minetest.show_formspec(player:get_player_name(), "edit_skin:edit_skin", formspec)
 end
 
-function edit_skin.filter_active_tab(player)
-	local formspec_data = edit_skin.player_formspecs[player]
-	local active_tab = formspec_data.active_tab
-	local admin_priv = formspec_data.has_admin_priv
-	local name = player:get_player_name()
-	formspec_data[active_tab] = {}
-	local textures = formspec_data[active_tab]
-	for i, texture in pairs(edit_skin[active_tab]) do
-		if admin_priv or not edit_skin.restricted_to_admin[texture] then
-			local restriction = edit_skin.restricted_to_player[texture]
-			if restriction then
-				if restriction[name] then
-					table.insert(textures, texture)
-				end
-			else
-				table.insert(textures, texture)
-			end
-		end
-	end
-end
-
-minetest.register_on_player_receive_fields(function(player, formname, fields)
-	if formname ~= "edit_skin:edit_skin" then return false end
-	
+function edit_skin.recieve_fields(player, formname, fields, allow)
 	local formspec_data = edit_skin.player_formspecs[player]
 	local active_tab = formspec_data.active_tab
 	
@@ -442,12 +419,12 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if fields.alex then
 		edit_skin.player_skins[player] = table.copy(edit_skin.alex)
 		edit_skin.update_player_skin(player)
-		edit_skin.show_formspec(player)
+		edit_skin.abstract_show_formspec(player, allow)
 		return true
 	elseif fields.steve then
 		edit_skin.player_skins[player] = table.copy(edit_skin.steve)
 		edit_skin.update_player_skin(player)
-		edit_skin.show_formspec(player)
+		edit_skin.abstract_show_formspec(player, allow)
 		return true
 	end
 	
@@ -455,7 +432,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if fields[tab] then
 			formspec_data.active_tab = tab
 			formspec_data.page_num = 1
-			edit_skin.show_formspec(player)
+			edit_skin.abstract_show_formspec(player, allow)
 			return true
 		end
 	end
@@ -471,14 +448,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			page_num = page_count
 		end
 		formspec_data.page_num = page_num
-		edit_skin.show_formspec(player)
+		edit_skin.abstract_show_formspec(player, allow)
 		return true
 	elseif fields.previous_page then
 		local page_num = formspec_data.page_num
 		page_num = page_num - 1
 		if page_num < 1 then page_num = 1 end
 		formspec_data.page_num = page_num
-		edit_skin.show_formspec(player)
+		edit_skin.abstract_show_formspec(player, allow)
 		return true
 	end
 	
@@ -503,7 +480,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				if player and player:is_player() then
 					skin[active_tab .. "_color"] = color
 					edit_skin.update_player_skin(player)
-					edit_skin.show_formspec(player)
+					edit_skin.abstract_show_formspec(player, allow)
 					formspec_data.form_send_job = nil
 				end
 			end)
@@ -525,7 +502,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			if texture == field then
 				skin[active_tab] = texture
 				edit_skin.update_player_skin(player)
-				edit_skin.show_formspec(player)
+				edit_skin.abstract_show_formspec(player, allow)
 				return true
 			end
 		end
@@ -538,12 +515,51 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if color and color >= 0 and color <= 0xffffffff then
 			skin[active_tab .. "_color"] = color
 			edit_skin.update_player_skin(player)
-			edit_skin.show_formspec(player)
+			edit_skin.abstract_show_formspec(player, allow)
 			return true
 		end
 	end
 
 	return true
+
+end
+
+function edit_skin.show_formspec(player)
+        local formspec = edit_skin.get_formspec(player)
+        minetest.show_formspec(player:get_player_name(), "edit_skin:edit_skin", formspec)
+end
+
+function edit_skin.filter_active_tab(player)
+	local formspec_data = edit_skin.player_formspecs[player]
+	local active_tab = formspec_data.active_tab
+	local admin_priv = formspec_data.has_admin_priv
+	local name = player:get_player_name()
+	formspec_data[active_tab] = {}
+	local textures = formspec_data[active_tab]
+	for i, texture in pairs(edit_skin[active_tab]) do
+		if admin_priv or not edit_skin.restricted_to_admin[texture] then
+			local restriction = edit_skin.restricted_to_player[texture]
+			if restriction then
+				if restriction[name] then
+					table.insert(textures, texture)
+				end
+			else
+				table.insert(textures, texture)
+			end
+		end
+	end
+end
+
+function edit_skin.abstract_show_formspec(player, allow)
+    if allow then
+        edit_skin.show_formspec(player)
+    end
+end
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	if formname ~= "edit_skin:edit_skin" then return false end
+	local allow = true
+	edit_skin.recieve_fields(player, formname, fields, allow)
 end)
 
 local function init()
@@ -619,11 +635,24 @@ local function init()
 	elseif minetest.global_exists("sfinv") then
 		sfinv.register_page("edit_skin", {
 			title = S("Edit Skin"),
-			get = function(self, player, context) return "" end,
-			on_enter = function(self, player, context)
-				sfinv.contexts[player:get_player_name()].page = sfinv.get_homepage_name(player)
-				edit_skin.show_formspec(player)
-			end
+                        get = function(self, player_obj, context)
+                            local pname = player_obj:get_player_name()
+                            local formspec = edit_skin.get_formspec(player_obj)
+                            return sfinv.make_formspec(player_obj, context, formspec, false, "size[14.2,11]")
+                        end,
+                        on_enter = function(self, player, context)
+                            context.edit_skin_idx = 1
+                        end,
+                        on_player_receive_fields = function(self, player_obj, context, fields)
+                            local pname = player_obj:get_player_name()
+                            local formname = self.name
+                            if formname == "edit_skin" and not fields.quit then
+                                edit_skin.recieve_fields(player_obj, formname, fields, nil)
+                                sfinv.set_player_inventory_formspec(player_obj, context) -- Update the form after receiving fields.
+                            elseif formname == "edit_skin" and fields.quit then
+                                edit_skin.save(player_obj)
+                            end
+                        end
 		})
 	end
 	if minetest.global_exists("unified_inventory") then
