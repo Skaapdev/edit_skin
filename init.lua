@@ -22,8 +22,9 @@ edit_skin = {
 	base = {}, -- List of base textures
 	
 	-- Base color is separate to keep the number of junk nodes registered in check
-	--base_color = {0xFFfbe3c8, 0xFFf6d2b1, 0xFFd09c6e, 0xFFd3a581, 0xFFb98664, 0xFFaa854f, 0xFFb57f52, 0xFF9d6444, 0xFF915a3c, 0xFF80513a, 0xFF674231, 0xFF42190b, 0xFF311304, 0xFF190c05, 0xFF775ebb, 0xFF3362d3, 0xFF3dc36c, 0xFFca5bc3}, -- Whatever this is supposed to do, it breaks the hand texture to be unknown item, so reverting back to when it was still working.
-	base_color = {0xffeeb592, 0xffb47a57, 0xff8d471d},
+	base_color = {0xffeeb592, 0xffb47a57, 0xff8d471d, 0xfffbe3c8, 0xfff6d2b1, 0xffd09c6e, 0xffd3a581, 0xffb98664, 0xffaa854f, 0xffb57f52, 0xff9d6444, 0xff42190b, 0xff311304, 0xff190c05, 0xff775ebb, 0xff3362d3, 0xff3dc36c, 0xffca5bc3}, -- This seems to work better.
+	-- removed these 0xff915a3c, 0xff80513a, 0xff674231 as they seem rather close to the other existing colors and I can only fit 21 colors on the form, so 3 has to go.
+	--base_color = {0xffeeb592, 0xffb47a57, 0xff8d471d}, -- These are the original, I restored these back at the start, I believe without these the hand texture unknown item bug happens.
 	color = {
 		0xff613915, -- 1 Dark brown Steve hair, Alex bottom
 		0xff97491b, -- 2 Medium brown
