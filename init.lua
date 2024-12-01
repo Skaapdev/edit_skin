@@ -139,6 +139,8 @@ function edit_skin.compile_skin(skin)
 end
 
 function edit_skin.update_player_skin(player)
+	local name = player:get_player_name()
+        if pmob_misson_request[name].active == 1 then return end -- Skaapdev disable for pmob.
 	local output = edit_skin.compile_skin(edit_skin.player_skins[player])
 
 	player_api.set_texture(player, 1, output)
@@ -153,7 +155,7 @@ function edit_skin.update_player_skin(player)
 		edit_skin.registered_on_set_skins[i](player)
 	end
 	
-	local name = player:get_player_name()
+
 	if
 		minetest.global_exists("armor") and
 		armor.textures and armor.textures[name]
@@ -647,6 +649,8 @@ local function init()
                         end,
                         on_player_receive_fields = function(self, player_obj, context, fields)
                             local pname = player_obj:get_player_name()
+                            print("edit_skin | pmob_misson_request[pname]:" .. dump(pmob_misson_request[pname]))
+                            if pmob_misson_request[pname].accepted == 1 or pmob_misson_request[pname].active == 1 then return end -- Block interaction during pmob misson.
                             local formname = self.name
                             if formname == "edit_skin" and not fields.quit then
                                 edit_skin.recieve_fields(player_obj, formname, fields, nil)
