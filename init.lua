@@ -140,7 +140,7 @@ end
 
 function edit_skin.update_player_skin(player)
 	local name = player:get_player_name()
-        if pmob.info[pname] and pmob.info[pname].state ~= 0 then return end -- Skaapdev disable for pmob.
+        if pmob.info[name] and pmob.info[name].state ~= 0 then return end -- Skaapdev disable for pmob.
 	local output = edit_skin.compile_skin(edit_skin.player_skins[player])
 
 	player_api.set_texture(player, 1, output)
